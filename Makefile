@@ -6,8 +6,8 @@
 homeDIR = $(shell pwd)
 
 CXX      := g++
-PYTHIA8HOME := $(homeDIR)/pythia8230
-HEPMCHOME := $(homeDIR)
+PYTHIA8HOME := $(homeDIR)/pythia8
+HEPMCHOME := $(homeDIR)/local
 FASTJETHOME := $(homeDIR)
 CXXFLAGS := -O3 -I$(PYTHIA8HOME)/include -I$(PYTHIA8HOME)/include/Pythia8/ -I$(HEPMCHOME)/include -I$(FASTJETHOME)/include -I$(ROOTSYS)/include
 LDFLAGS  := -L$(PYTHIA8HOME)/lib/ -L$(PYTHIA8HOME)/lib -Wl,-rpath,$(PYTHIA8HOME)/lib

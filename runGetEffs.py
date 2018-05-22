@@ -51,6 +51,8 @@ def Run_pythia(parser,inputFile):
     #Run Pythia
     logger.info('Running pythia for %s' %inputFile)
     #Create FIFO file
+    if os.path.isfile(pars['pythiaout']):
+        os.remove(pars['pythiaout'])
     os.system('mkfifo %s' %pars['pythiaout'])
     subprocess.Popen('./%s -f %s -c %s -o %s -n %s &' %(pars['execfile'],
                                                           inputFile,pars['pythiacfg'],pars['pythiaout'],pars['nevts'])
@@ -81,6 +83,7 @@ def Run_rivet(parser):
                                                             ,pars['rivetout'])
                            ,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     
+    os.remove(fifoFile)    
     output,errorMsg= run.communicate()
     logger.debug('Rivet error:\n %s \n' %errorMsg)
     logger.debug('Rivet output:\n %s \n' %output)
@@ -109,7 +112,7 @@ def runAll(parserDict):
             logger.debug("Pythia run submitted")
                 
     #Run Rivet:
-    if parser.getboolean("options","runPythia"):    
+    if parser.getboolean("options","runRivet"):    
         Run_rivet(parser)
         logger.debug("Rivet run submitted")
 
@@ -168,23 +171,25 @@ if __name__ == "__main__":
     if not isinstance(inputFiles,list):
         inputFiles = [inputFiles]
     for infile in inputFiles:
+        print('Running for',infile)
         newParser = ConfigParserExt()
         newParser.read_dict(parser.toDict())       
         newParser.set("PythiaOptions","inputFile",infile)
         parserDict = newParser.toDict(raw=False) #Must convert to dictionary for pickling
         runAll(parserDict)
-#         p = pool.apply_async(runAll, args=(parserDict,))        
-#         children.append(p)
-#         if len(children) == 1:
-#             #Compile pythia code just once:
-#             if parser.get("PythiaOptions",'execfile') != 'None':
-#                 os.system("make %s" %parser.get("PythiaOptions",'execfile'))            
-#             time.sleep(15)  #Let first job run for 15s in case it needs to create shared folders
-#       
-#     #Wait for jobs to finish:
-#     output = [p.get() for p in children]
-#     for out in output:
-#         print(out)
+        p = pool.apply_async(runAll, args=(parserDict,))        
+        children.append(p)
+        if len(children) == 1:
+            #Compile pythia code just once:
+            if parser.get("PythiaOptions",'execfile') != 'None':
+                os.system("make %s" %parser.get("PythiaOptions",'execfile'))            
+            time.sleep(15)  #Let first job run for 15s in case it needs to create shared folders
+       
+    #Wait for jobs to finish:
+    print('child=',len(children))
+    output = [p.get() for p in children]
+    for out in output:
+        print(out)
 
     print("\n\nDone in %3.2f min" %((time.time()-t0)/60.))
             
