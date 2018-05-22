@@ -11,3 +11,23 @@ The following codes must be installed:
 
 The script installer.sh will try to fetch the appropriate tarballs and install them.
 
+
+
+## Running ##
+
+For computing efficiencies from SLHA files using Pythia and Rivet:
+
+```
+./runGetEffs.py -h
+```
+
+The above code takes a parameter file
+(eff_parameters.ini), where several parameters are defined (default parameters are defined
+in [eff_parameters_default.ini](./eff_parameters_default.ini).
+It will then run Pythia and Rivet for a specific analyses or set of analyses, resulting in
+a yoda file.
+
+The parameter file accepts a list of inputFiles. In this case Pythia and Rivet will be run in parallel
+for each file, according to the number of cpu (processes) set in options.
+
+
