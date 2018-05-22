@@ -7,12 +7,11 @@
 # 3) Runs yodaParser.py to read Rivet output and convert it to a efficiency table
 
 #First tell the system where to find the modules:
-import sys,os
+import sys,os,glob
 from configParserWrapper import ConfigParserExt
 import logging
 import subprocess
 import time,datetime
-import itertools
 import multiprocessing
 
 FORMAT = '%(levelname)s in %(module)s.%(funcName)s() in %(lineno)s: %(message)s at %(asctime)s'
@@ -58,7 +57,7 @@ def Run_pythia(parser,inputFile):
                                                           inputFile,pars['pythiacfg'],pars['pythiaout'],pars['nevts'])
                            ,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     
-
+    return
 
 def Run_rivet(parser):
     """
@@ -82,13 +81,14 @@ def Run_rivet(parser):
     run = subprocess.Popen('rivet %s -a %s -o %s' %(fifoFile,pars['analyses']
                                                             ,pars['rivetout'])
                            ,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    
-    os.remove(fifoFile)    
+ 
     output,errorMsg= run.communicate()
     logger.debug('Rivet error:\n %s \n' %errorMsg)
     logger.debug('Rivet output:\n %s \n' %output)
-     
+    os.remove(fifoFile)       
     logger.info("Finished Rivet run")
+    
+    return
 
 
 def runAll(parserDict):
@@ -164,19 +164,21 @@ if __name__ == "__main__":
     children = []
     #Loop over model parameters and submit jobs
     inputFiles = parser.get("PythiaOptions","inputFile")
-    try:
-        inputFiles = eval(inputFiles)
-    except:
-        pass
-    if not isinstance(inputFiles,list):
+    if os.path.isfile(inputFiles):
         inputFiles = [inputFiles]
+    elif os.path.isdir(inputFiles):
+        inputFiles = glob.glob(inputFiles+'/*.slha')
+    else:
+        logger.error('Input %s not found' %inputFiles)
+        sys.exit()
+    
     for infile in inputFiles:
-        print('Running for',infile)
         newParser = ConfigParserExt()
         newParser.read_dict(parser.toDict())       
         newParser.set("PythiaOptions","inputFile",infile)
+        newParser.set("PythiaOptions","pythiaout",os.path.basename(infile).replace('.slha','.fifo'))
+        newParser.set("RivetOptions","rivetout",'./yodaFiles/'+os.path.basename(infile).replace('.slha','.yoda'))
         parserDict = newParser.toDict(raw=False) #Must convert to dictionary for pickling
-        runAll(parserDict)
         p = pool.apply_async(runAll, args=(parserDict,))        
         children.append(p)
         if len(children) == 1:
@@ -184,9 +186,8 @@ if __name__ == "__main__":
             if parser.get("PythiaOptions",'execfile') != 'None':
                 os.system("make %s" %parser.get("PythiaOptions",'execfile'))            
             time.sleep(15)  #Let first job run for 15s in case it needs to create shared folders
-       
+        
     #Wait for jobs to finish:
-    print('child=',len(children))
     output = [p.get() for p in children]
     for out in output:
         print(out)
