@@ -101,7 +101,7 @@ def getEffsFromFolder(yodaFolder):
     return effsList
 
 
-def writeEffsToFile(effsList,yodaFolder,slhaFolder,xpdg,ypdg):
+def writeEffsToFile(effsList,yodaFolder,slhaFolder,xpdg,ypdg,doError):
     """
     Write effs to outfile in the format:
        #<header>
@@ -139,11 +139,13 @@ def writeEffsToFile(effsList,yodaFolder,slhaFolder,xpdg,ypdg):
             yval = slhaData.blocks['MASS'][ypdg]
             xvals = [xval,yval]
             vals = [effs[SR] for SR in SRs]
-#             errvals = [sqrt(effs[SR])/effsList[f]['Ntotal'] for SR in SRs]
-            outF.write("".join(("%.6e " %x).ljust(col_width) for x in xvals))                    
-#             outF.write("".join(("%.2e +- %.2e" %(v,errvals[i])).ljust(col_width)
-#                                 for i,v in enumerate(vals))+'\n')
-            outF.write("".join(("%.2e" %(v)).ljust(col_width)
+            outF.write("".join(("%.6e " %x).ljust(col_width) for x in xvals))
+            if doError:
+                errvals = [sqrt(effs[SR])/effsList[f]['Ntotal'] for SR in SRs]
+                outF.write("".join(("%.2e +- %.2e" %(v,errvals[i])).ljust(col_width)
+                                for i,v in enumerate(vals))+'\n')
+            else:                    
+                outF.write("".join(("%.2e" %(v)).ljust(col_width)
                                 for v in vals)+'\n')
             
         outF.close()
@@ -162,13 +164,15 @@ if __name__ == "__main__":
             help='PDG for the particle in the x-axies', default = 1000021)
     ap.add_argument('-y', '--ypdg',
             help='PDG for the particle in the y-axies', default = 1000022)
+    ap.add_argument('-E', '--error', default = False,
+            help='If set will include the statistical errors', action='store_true')
 
     
     args = ap.parse_args()
     
     effs = getEffsFromFolder(args.yodaFolder)
     if effs:
-        writeEffsToFile(effs,args.yodaFolder,args.slhaFolder,args.xpdg,args.ypdg)
+        writeEffsToFile(effs,args.yodaFolder,args.slhaFolder,args.xpdg,args.ypdg,args.error)
     else:
         logger.error('No analyses found in %s' %args.yodaFolder)
 
