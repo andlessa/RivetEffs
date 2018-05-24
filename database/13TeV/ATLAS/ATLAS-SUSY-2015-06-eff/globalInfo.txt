@@ -1,0 +1,12 @@
+id: ATLAS-SUSY-2015-06
+sqrts: 13*TeV
+lumi: 3.2/fb
+prettyName: 2-6 jets, 0 lep
+url: http://atlas.web.cern.ch/Atlas/GROUPS/PHYSICS/PAPERS/SUSY-2015-06/
+arxiv: https://arxiv.org/abs/1605.03814
+publication: http://link.springer.com/article/10.1140/epjc/s10052-016-4184-8
+contact: ATLAS collaboration
+comment: Efficiency maps created using Pythia 8.230 and Rivet 2.6.0
+private: False
+implementedBy: Andre Lessa
+lastUpdate: 2018/5/23
